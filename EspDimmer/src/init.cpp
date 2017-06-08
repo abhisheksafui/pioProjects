@@ -1,7 +1,8 @@
+#include <Arduino.h>
 #include <FS.h>
 #include <ESP8266WiFi.h>
 #include "config.hpp"
-
+#include <ESPAsyncUDP.h>
 void gpioInit(){
 
 }
@@ -78,4 +79,33 @@ void spiffsInit(){
     return;
   }
   Serial.println("[OK]");
+}
+#define SERVER_LISTEN_PORT 1234
+AsyncUDP udp;
+
+void udpServerInit(){
+  Serial.print("Starting UDP server on port " + WiFi.localIP());
+  Serial.print(":"+ String(SERVER_LISTEN_PORT));
+  Serial.print(" ");
+  if(udp.listen(SERVER_LISTEN_PORT)){
+    Serial.println("[OK]");
+    udp.onPacket([](AsyncUDPPacket packet) {
+            Serial.print("UDP Packet Type: ");
+            Serial.print(packet.isBroadcast()?"Broadcast":packet.isMulticast()?"Multicast":"Unicast");
+            Serial.print(", From: ");
+            Serial.print(packet.remoteIP());
+            Serial.print(":");
+            Serial.print(packet.remotePort());
+            Serial.print(", To: ");
+            Serial.print(packet.localIP());
+            Serial.print(":");
+            Serial.print(packet.localPort());
+            Serial.print(", Length: ");
+            Serial.print(packet.length());
+            Serial.print(", Data: ");
+            Serial.write(packet.data(), packet.length());
+            Serial.println();});
+  }else{
+    Serial.println("[ERR]");
+  }
 }

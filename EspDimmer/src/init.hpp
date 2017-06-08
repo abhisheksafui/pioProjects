@@ -4,5 +4,6 @@
 void gpioInit();
 void wifiInit();
 void spiffsInit();
+void udpServerInit();
 
 #endif
