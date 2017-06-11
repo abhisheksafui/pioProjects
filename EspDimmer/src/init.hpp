@@ -5,5 +5,6 @@ void gpioInit();
 void wifiInit();
 void spiffsInit();
 void udpServerInit();
+void otaSetup();
 
 #endif

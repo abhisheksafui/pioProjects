@@ -3,6 +3,10 @@
 #include <ESP8266WiFi.h>
 #include "config.hpp"
 #include <ESPAsyncUDP.h>
+#include <ArduinoOTA.h>
+
+#include "global.h"
+
 void gpioInit(){
 
 }
@@ -17,7 +21,7 @@ WiFiEventHandler onDisconnectHandler;
 bool disconnected = false;
 void onDisconnected(const WiFiEventStationModeDisconnected& event)
 {
-  Serial.println("Wifi Disconnected from accesspoint " + event.ssid +
+  DEBUG_PORT.println("Wifi Disconnected from accesspoint " + event.ssid +
   ". Reason [" + event.reason +"].");
   //connectWifi(ssid,passwd);
   disconnected = true;
@@ -25,8 +29,8 @@ void onDisconnected(const WiFiEventStationModeDisconnected& event)
 
 void onConnected(const WiFiEventStationModeConnected& event){
   disconnected = false;
-  Serial.println("Wifi connected to accespoint.");
-  Serial.println("  SSID: " + event.ssid);
+  DEBUG_PORT.println("Wifi connected to accespoint.");
+  DEBUG_PORT.println("  SSID: " + event.ssid);
   char bssid[100];
   sprintf(bssid,"%02x:%02x:%02x:%02x:%02x:%02x",event.bssid[0],
   event.bssid[1],
@@ -34,13 +38,13 @@ void onConnected(const WiFiEventStationModeConnected& event){
   event.bssid[3],
   event.bssid[4],
   event.bssid[5]);
-  Serial.print("  BSSID: " ); Serial.println(bssid);
-  Serial.println("  Channel: " + event.channel);
+  DEBUG_PORT.print("  BSSID: " ); DEBUG_PORT.println(bssid);
+  DEBUG_PORT.println("  Channel: " + event.channel);
 }
 
 void connectWifi(String &ssid,String &passwd)
 {
-  Serial.println("Connecting to " + ssid);
+  DEBUG_PORT.println("Connecting to " + ssid);
   WiFi.begin(ssid.c_str(),passwd.c_str());
 
 }
@@ -57,8 +61,8 @@ void wifiInit(){
   {
     WiFi.mode(WIFI_STA);
     WiFi.softAP(conf.softApSSID.c_str(),conf.softApPasswd.c_str());
-    Serial.println("Soft AP started.");
-    Serial.print(" SSID: " + conf.softApSSID + " Passwd: " + conf.softApPasswd);
+    DEBUG_PORT.println("Soft AP started.");
+    DEBUG_PORT.print(" SSID: " + conf.softApSSID + " Passwd: " + conf.softApPasswd);
 
   }else if(conf.mode == "AP"){
     WiFi.mode(WIFI_AP);
@@ -67,45 +71,51 @@ void wifiInit(){
     WiFi.mode(WIFI_AP_STA);
     connectWifi(conf.apSSID,conf.apPasswd);
     WiFi.softAP(conf.softApSSID.c_str(),conf.softApPasswd.c_str());
-    Serial.println("Soft AP started.");
-    Serial.print(" SSID: " + conf.softApSSID + " Passwd: " + conf.softApPasswd);
+    DEBUG_PORT.println("Soft AP started.");
+    DEBUG_PORT.print(" SSID: " + conf.softApSSID + " Passwd: " + conf.softApPasswd);
   }
 }
 
 void spiffsInit(){
-  Serial.print("Mounting SPIFFS..");
+  DEBUG_PORT.print("Mounting SPIFFS..");
   if (!SPIFFS.begin()) {
-    Serial.println("[ERR]");
+    DEBUG_PORT.println("[ERR]");
     return;
   }
-  Serial.println("[OK]");
+  DEBUG_PORT.println("[OK]");
 }
 #define SERVER_LISTEN_PORT 1234
 AsyncUDP udp;
 
 void udpServerInit(){
-  Serial.print("Starting UDP server on port " + WiFi.localIP());
-  Serial.print(":"+ String(SERVER_LISTEN_PORT));
-  Serial.print(" ");
+  DEBUG_PORT.print("Starting UDP server on port " + WiFi.localIP());
+  DEBUG_PORT.print(":"+ String(SERVER_LISTEN_PORT));
+  DEBUG_PORT.print(" ");
   if(udp.listen(SERVER_LISTEN_PORT)){
-    Serial.println("[OK]");
+    DEBUG_PORT.println("[OK]");
     udp.onPacket([](AsyncUDPPacket packet) {
-            Serial.print("UDP Packet Type: ");
-            Serial.print(packet.isBroadcast()?"Broadcast":packet.isMulticast()?"Multicast":"Unicast");
-            Serial.print(", From: ");
-            Serial.print(packet.remoteIP());
-            Serial.print(":");
-            Serial.print(packet.remotePort());
-            Serial.print(", To: ");
-            Serial.print(packet.localIP());
-            Serial.print(":");
-            Serial.print(packet.localPort());
-            Serial.print(", Length: ");
-            Serial.print(packet.length());
-            Serial.print(", Data: ");
-            Serial.write(packet.data(), packet.length());
-            Serial.println();});
+            DEBUG_PORT.print("UDP Packet Type: ");
+            DEBUG_PORT.print(packet.isBroadcast()?"Broadcast":packet.isMulticast()?"Multicast":"Unicast");
+            DEBUG_PORT.print(", From: ");
+            DEBUG_PORT.print(packet.remoteIP());
+            DEBUG_PORT.print(":");
+            DEBUG_PORT.print(packet.remotePort());
+            DEBUG_PORT.print(", To: ");
+            DEBUG_PORT.print(packet.localIP());
+            DEBUG_PORT.print(":");
+            DEBUG_PORT.print(packet.localPort());
+            DEBUG_PORT.print(", Length: ");
+            DEBUG_PORT.print(packet.length());
+            DEBUG_PORT.print(", Data: ");
+            DEBUG_PORT.write(packet.data(), packet.length());
+            DEBUG_PORT.println();});
   }else{
-    Serial.println("[ERR]");
+    DEBUG_PORT.println("[ERR]");
   }
+}
+
+void otaSetup(){
+  DEBUG_PORT.println("OTA hostname: "+ conf.hostname);
+  ArduinoOTA.setHostname(conf.hostname.c_str());
+  ArduinoOTA.begin();
 }
