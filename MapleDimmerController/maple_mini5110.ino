@@ -50,9 +50,7 @@ String command;
 void trigger_triac()
 {
   timer_2.pause();
-  triac1.trigger();
-  
-  
+  triac1.trigger(); 
 }
 
 void sw1PressCallback(){
@@ -116,7 +114,7 @@ void setup() {
   trigger_count =0;
   freq_capture_ts = millis();
   pinMode(22,INPUT_PULLUP);
-  attachInterrupt(22,extInt1,RISING);
+  attachInterrupt(22,extInt1,FALLING);
 
 }
 
@@ -194,7 +192,7 @@ void extInt1()
   /* T = 1/F ; Divide it into 100 steps */ /* for 50 HZ
   /* S = T/100. U = user value = n */
   /* delay n*S */
-
+#if 0
     /* timer 2 has already been set up just fire it and stop it in timer interrupt*/
     if(triac1.getCycleDelay() !=0 )
     {
@@ -202,10 +200,13 @@ void extInt1()
     }
     else
     {
+#endif
       /* Speed set to maximum value */ 
-      triac1.trigger();
-      timer_2.resume(); 
+      //triac1.trigger();
+      timer_2.resume();
+#if 0 
     }
+#endif
 
     trigger_count++;
   

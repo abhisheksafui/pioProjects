@@ -45,7 +45,7 @@ void Triac::trigger()
     return; 
     
   digitalWrite(trigger_pin,HIGH);
-  delayMicroseconds(800);
+  delayMicroseconds(100);
   digitalWrite(trigger_pin,LOW);
 }
 
@@ -56,6 +56,10 @@ void Triac::setSpeed(uint8_t speed)
      
   speed_set = speed;
   cycle_delay_us = time_period_us - speed_set*(time_period_us/max_steps);
+
+  /*Minimum 400 us delay needed to turn on the triac*/
+  /* This occurs only at extreme high end of the value (approx 97%)*/
+  if(cycle_delay_us <= 400){cycle_delay_us = 400;}
   
 }
 
